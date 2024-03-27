@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: auth
+
+  jpa:
+    database: postgresql
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+  liquibase:
+    enabled: true
