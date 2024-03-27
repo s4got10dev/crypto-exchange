@@ -1,0 +1,12 @@
+<configuration>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%cyan(%d{yyyy-dd-MM HH:mm:ss.SSS}) %gray([%thread]) %highlight(%-5level) %yellow(%logger{36}) - %msg%n</pattern>
+        </encoder>
+    </appender>
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+    <logger name="org.springframework" level="INFO"/>
+    <logger name="s4got10dev" level="DEBUG"/>
+</configuration>

@@ -1,0 +1,14 @@
+version: '3.9'
+name: crypto-exchange
+services:
+  database:
+    container_name: postgres_15_6
+    image: postgres:15.6-alpine
+    hostname: postgres
+    environment:
+      POSTGRES_USER: 'crypto'
+      POSTGRES_PASSWORD: 'password'
+      POSTGRES_DB: 'crypto-exchange'
+    ports:
+      - "5432:5432"
+    restart: always

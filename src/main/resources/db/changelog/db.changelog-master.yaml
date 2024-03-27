@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-add-user-account-table
+      author: s4got10dev
+      changes:
+        - sqlFile:
+            path: db/changelog/001-add-user-account-table.sql
+  - changeSet:
+      id: 002-add-wallet-table
+      author: s4got10dev
+      changes:
+        - sqlFile:
+            path: db/changelog/002-add-wallet-table.sql
+  - changeSet:
+      id: 003-add-trade-order-table
+      author: s4got10dev
+      changes:
+        - sqlFile:
+            path: db/changelog/003-add-trade-order-table.sql
+  - changeSet:
+      id: 004-add-transaction-table
+      author: s4got10dev
+      changes:
+        - sqlFile:
+            path: db/changelog/004-add-transaction-table.sql
