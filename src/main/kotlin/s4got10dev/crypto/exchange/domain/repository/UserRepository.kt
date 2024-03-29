@@ -1,19 +1,19 @@
 package s4got10dev.crypto.exchange.domain.repository
 
-import reactor.core.publisher.Mono
 import s4got10dev.crypto.exchange.domain.entity.EmailAddress
 import s4got10dev.crypto.exchange.domain.entity.User
 import s4got10dev.crypto.exchange.domain.entity.UserId
 import s4got10dev.crypto.exchange.domain.entity.Username
 
 interface UserRepository {
-  fun save(user: User): Mono<User>
 
-  fun findById(id: UserId): Mono<User>
+  suspend fun save(user: User): User
 
-  fun existsByUsername(username: Username): Mono<Boolean>
+  suspend fun findById(id: UserId): User?
 
-  fun existsByUsernameOrEmail(username: Username, email: EmailAddress): Mono<Boolean>
+  suspend fun existsByUsername(username: Username): Boolean
 
-  fun findByUsername(username: Username): Mono<User>
+  suspend fun existsByUsernameOrEmail(username: Username, email: EmailAddress): Boolean
+
+  suspend fun findByUsername(username: Username): User?
 }

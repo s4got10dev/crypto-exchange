@@ -10,7 +10,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import reactor.core.publisher.Mono
 import s4got10dev.crypto.exchange.infrastructure.auth.AuthPrincipal
 import s4got10dev.crypto.exchange.interfaces.rest.API_V1_USERS_ME
 import s4got10dev.crypto.exchange.interfaces.rest.API_V1_USERS_REGISTER
@@ -42,7 +41,7 @@ interface UserApi {
     ]
   )
   @PostMapping(API_V1_USERS_REGISTER)
-  fun registerUser(@RequestBody request: RegisterUserRequest): Mono<ResponseEntity<Void>>
+  suspend fun registerUser(@RequestBody request: RegisterUserRequest): ResponseEntity<Unit>
 
   @Operation(
     method = "GET",
@@ -71,5 +70,5 @@ interface UserApi {
     ]
   )
   @GetMapping(API_V1_USERS_ME)
-  fun getUser(@AuthenticationPrincipal authPrincipal: AuthPrincipal?): Mono<ResponseEntity<UserResponse>>
+  suspend fun getUser(@AuthenticationPrincipal authPrincipal: AuthPrincipal?): ResponseEntity<UserResponse>
 }

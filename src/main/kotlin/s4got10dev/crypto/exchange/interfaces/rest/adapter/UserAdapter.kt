@@ -3,8 +3,6 @@ package s4got10dev.crypto.exchange.interfaces.rest.adapter
 import jakarta.validation.Validator
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Component
-import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.toMono
 import s4got10dev.crypto.exchange.domain.entity.UserId
 import s4got10dev.crypto.exchange.domain.error.BadRequestError
 import s4got10dev.crypto.exchange.domain.usecase.CreateUserCommand
@@ -17,12 +15,12 @@ class UserAdapter(
   private val passwordEncoder: PasswordEncoder
 ) {
 
-  fun createUserCommand(request: RegisterUserRequest): Mono<CreateUserCommand> {
+  fun createUserCommand(request: RegisterUserRequest): CreateUserCommand {
     validator.validateRequest(request)?.let {
-      return it.toMono()
+      throw it
     }
     if (request.username == null || request.email == null || request.firstName == null || request.lastName == null) {
-      return BadRequestError("Required fields are missing").toMono()
+      throw BadRequestError("Required fields are missing")
     }
     return CreateUserCommand(
       username = request.username,
@@ -30,13 +28,13 @@ class UserAdapter(
       firstName = request.firstName,
       lastName = request.lastName,
       email = request.email
-    ).toMono()
+    )
   }
 
-  fun userQuery(userId: UserId?): Mono<UserQuery> {
+  fun userQuery(userId: UserId?): UserQuery {
     if (userId == null) {
-      return BadRequestError("Invalid user id").toMono()
+      throw BadRequestError("Invalid user id")
     }
-    return UserQuery(userId = userId).toMono()
+    return UserQuery(userId = userId)
   }
 }

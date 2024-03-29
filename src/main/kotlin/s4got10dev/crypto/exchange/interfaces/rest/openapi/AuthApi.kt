@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import reactor.core.publisher.Mono
 import s4got10dev.crypto.exchange.infrastructure.auth.AuthPrincipal
 import s4got10dev.crypto.exchange.interfaces.rest.API_V1_LOGIN
 import s4got10dev.crypto.exchange.interfaces.rest.API_V1_LOGOUT
@@ -51,7 +50,7 @@ interface AuthApi {
     ]
   )
   @PostMapping(API_V1_LOGIN)
-  fun login(@RequestBody request: LoginRequest): Mono<ResponseEntity<Void>>
+  suspend fun login(@RequestBody request: LoginRequest): ResponseEntity<Unit>
 
   @Operation(
     method = "POST",
@@ -75,5 +74,5 @@ interface AuthApi {
     ]
   )
   @PostMapping(API_V1_LOGOUT)
-  fun logout(@AuthenticationPrincipal authPrincipal: AuthPrincipal?): Mono<ResponseEntity<Void>>
+  suspend fun logout(@AuthenticationPrincipal authPrincipal: AuthPrincipal?): ResponseEntity<Unit>
 }

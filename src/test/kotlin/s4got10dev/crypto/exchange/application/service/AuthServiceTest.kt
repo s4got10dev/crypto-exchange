@@ -1,16 +1,17 @@
 package s4got10dev.crypto.exchange.application.service
 
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import java.util.UUID.randomUUID
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.springframework.security.crypto.password.PasswordEncoder
-import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.toMono
-import reactor.test.StepVerifier
 import s4got10dev.crypto.exchange.domain.entity.User
 import s4got10dev.crypto.exchange.domain.error.NotFoundError
 import s4got10dev.crypto.exchange.domain.error.UnauthorizedError
@@ -30,19 +31,15 @@ class AuthServiceTest {
     val encodedPassword = "encodedPassword"
     val user = User(randomUUID(), username, encodedPassword, "firstName", "lastName", "email")
 
-    every { userRepository.findByUsername(username) } returns user.toMono()
+    coEvery { userRepository.findByUsername(username) } returns user
     every { passwordEncoder.matches(plainPassword, encodedPassword) } returns true
 
-    StepVerifier.create(authService.login(username, plainPassword))
-      .expectNextMatches {
-        assertThat(it)
-          .isNotNull
-          .isEqualTo(user)
-        true
-      }
-      .verifyComplete()
+    val result = runBlocking { authService.login(username, plainPassword) }
+    assertThat(result)
+      .isNotNull()
+      .isEqualTo(user)
 
-    verify(exactly = 1) { userRepository.findByUsername(any()) }
+    coVerify(exactly = 1) { userRepository.findByUsername(any()) }
     verify(exactly = 1) { passwordEncoder.matches(any(), any()) }
     confirmVerified(userRepository, passwordEncoder)
   }
@@ -52,18 +49,13 @@ class AuthServiceTest {
     val username = "user"
     val plainPassword = "password"
 
-    every { userRepository.findByUsername(username) } returns Mono.empty()
+    coEvery { userRepository.findByUsername(username) } returns null
 
-    StepVerifier.create(authService.login(username, plainPassword))
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(NotFoundError::class.java)
-          .hasMessage("User with username '$username' not found")
-        true
-      }
-      .verify()
+    assertThatThrownBy { runBlocking { authService.login(username, plainPassword) } }
+      .isInstanceOf(NotFoundError::class.java)
+      .hasMessage("User with username '$username' not found")
 
-    verify(exactly = 1) { userRepository.findByUsername(any()) }
+    coVerify(exactly = 1) { userRepository.findByUsername(any()) }
     confirmVerified(userRepository, passwordEncoder)
   }
 
@@ -74,19 +66,14 @@ class AuthServiceTest {
     val encodedPassword = "encodedPassword"
     val user = User(randomUUID(), username, encodedPassword, "firstName", "lastName", "email")
 
-    every { userRepository.findByUsername(username) } returns user.toMono()
+    coEvery { userRepository.findByUsername(username) } returns user
     every { passwordEncoder.matches(plainPassword, encodedPassword) } returns false
 
-    StepVerifier.create(authService.login(username, plainPassword))
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(UnauthorizedError::class.java)
-          .hasMessage("Invalid username/password")
-        true
-      }
-      .verify()
+    assertThatThrownBy { runBlocking { authService.login(username, plainPassword) } }
+      .isInstanceOf(UnauthorizedError::class.java)
+      .hasMessage("Invalid username/password")
 
-    verify(exactly = 1) { userRepository.findByUsername(any()) }
+    coVerify(exactly = 1) { userRepository.findByUsername(any()) }
     verify(exactly = 1) { passwordEncoder.matches(any(), any()) }
     confirmVerified(userRepository, passwordEncoder)
   }

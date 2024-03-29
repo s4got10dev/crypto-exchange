@@ -5,9 +5,9 @@ import io.mockk.mockk
 import jakarta.validation.Validator
 import java.util.UUID.randomUUID
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.springframework.security.crypto.password.PasswordEncoder
-import reactor.test.StepVerifier
 import s4got10dev.crypto.exchange.domain.error.BadRequestError
 import s4got10dev.crypto.exchange.interfaces.rest.model.RegisterUserRequest
 
@@ -33,17 +33,11 @@ class UserAdapterTest {
     every { passwordEncoder.encode(request.password) } returns encryptedPassword
 
     val result = userAdapter.createUserCommand(request)
-
-    StepVerifier.create(result)
-      .expectNextMatches {
-        assertThat(it.username).isEqualTo(request.username)
-        assertThat(it.password).isEqualTo(encryptedPassword)
-        assertThat(it.firstName).isEqualTo(request.firstName)
-        assertThat(it.lastName).isEqualTo(request.lastName)
-        assertThat(it.email).isEqualTo(request.email)
-        true
-      }
-      .verifyComplete()
+    assertThat(result.username).isEqualTo(request.username)
+    assertThat(result.password).isEqualTo(encryptedPassword)
+    assertThat(result.firstName).isEqualTo(request.firstName)
+    assertThat(result.lastName).isEqualTo(request.lastName)
+    assertThat(result.email).isEqualTo(request.email)
   }
 
   @Test
@@ -58,41 +52,25 @@ class UserAdapterTest {
 
     every { validator.validate(request) } returns setOf()
 
-    val result = userAdapter.createUserCommand(request)
-
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(BadRequestError::class.java)
-          .hasMessage("Required fields are missing")
-        true
-      }
-      .verify()
+    assertThatThrownBy { userAdapter.createUserCommand(request) }
+      .isInstanceOf(BadRequestError::class.java)
+      .hasMessage("Required fields are missing")
   }
 
   @Test
   fun `userQuery should return UserQuery when userId is valid`() {
     val userId = randomUUID()
+
     val result = userAdapter.userQuery(userId)
-    StepVerifier.create(result)
-      .expectNextMatches {
-        assertThat(it.userId).isEqualTo(userId)
-        true
-      }
-      .verifyComplete()
+    assertThat(result.userId).isEqualTo(userId)
   }
 
   @Test
   fun `userQuery should return BadRequestError when userId is invalid`() {
     val userId = null
-    val result = userAdapter.userQuery(userId)
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(BadRequestError::class.java)
-          .hasMessage("Invalid user id")
-        true
-      }
-      .verify()
+
+    assertThatThrownBy { userAdapter.userQuery(userId) }
+      .isInstanceOf(BadRequestError::class.java)
+      .hasMessage("Invalid user id")
   }
 }

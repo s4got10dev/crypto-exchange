@@ -1,10 +1,9 @@
 package s4got10dev.crypto.exchange.infrastructure.persistence.repository
 
 import java.util.UUID
-import org.springframework.data.repository.reactive.ReactiveCrudRepository
+import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
-import reactor.core.publisher.Mono
 import s4got10dev.crypto.exchange.domain.entity.EmailAddress
 import s4got10dev.crypto.exchange.domain.entity.User
 import s4got10dev.crypto.exchange.domain.entity.UserId
@@ -18,35 +17,35 @@ import s4got10dev.crypto.exchange.infrastructure.persistence.table.UserTable
 @Transactional
 class UserSqlDbRepository(val repository: UserR2dbcRepository) : UserRepository {
 
-  override fun save(user: User): Mono<User> {
-    return repository.save(user.toUserTable()).map { it.toUser() }
+  override suspend fun save(user: User): User {
+    return repository.save(user.toUserTable()).toUser()
   }
 
-  override fun findById(id: UserId): Mono<User> {
-    return repository.findById(id).map { it.toUser() }
+  override suspend fun findById(id: UserId): User? {
+    return repository.findById(id)?.toUser()
   }
 
-  override fun existsByUsername(username: Username): Mono<Boolean> {
+  override suspend fun existsByUsername(username: Username): Boolean {
     return repository.existsByUsername(username)
   }
 
-  override fun existsByUsernameOrEmail(username: Username, email: EmailAddress): Mono<Boolean> {
+  override suspend fun existsByUsernameOrEmail(username: Username, email: EmailAddress): Boolean {
     return repository.existsByUsernameOrEmail(username, email)
   }
 
-  override fun findByUsername(username: Username): Mono<User> {
-    return repository.findByUsername(username).map { it.toUser() }
+  override suspend fun findByUsername(username: Username): User? {
+    return repository.findByUsername(username)?.toUser()
   }
 }
 
 @Repository
-interface UserR2dbcRepository : ReactiveCrudRepository<UserTable, UUID> {
+interface UserR2dbcRepository : CoroutineCrudRepository<UserTable, UUID> {
 
-  fun save(user: UserTable): Mono<UserTable>
+  suspend fun save(user: UserTable): UserTable
 
-  fun existsByUsername(username: String): Mono<Boolean>
+  suspend fun existsByUsername(username: String): Boolean
 
-  fun existsByUsernameOrEmail(username: String, email: String): Mono<Boolean>
+  suspend fun existsByUsernameOrEmail(username: String, email: String): Boolean
 
-  fun findByUsername(username: String): Mono<UserTable>
+  suspend fun findByUsername(username: String): UserTable?
 }
