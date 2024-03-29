@@ -36,7 +36,10 @@ Swagger UI will be available at [http://localhost:8080/api-docs/swagger-ui](http
     - ☕️ **Kotlin**
     - 🍃 **Spring Boot**
         - WebFlux
+      - Security
+      - Validation
         - Data R2DBC
+      - Kotlin Coroutines
         - SpringDoc OpenAPI+Swagger
     - ⚙️ **Misc**
         - Liquibase
