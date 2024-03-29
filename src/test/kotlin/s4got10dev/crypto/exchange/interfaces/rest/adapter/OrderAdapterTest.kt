@@ -109,7 +109,6 @@ class OrderAdapterTest {
     val userId = randomUUID()
     val orderId = randomUUID().toString()
 
-
     val result = runBlocking { orderAdapter.cancelOrderCommand(userId, orderId) }
     assertThat(result.userId).isEqualTo(userId)
     assertThat(result.orderId.toString()).isEqualTo(orderId)

@@ -262,7 +262,7 @@ class OrderServiceTest {
   }
 
   @Test
-  fun `cancelOrder should return empty Mono when order is canceled`() {
+  fun `cancelOrder should cancel oder`() {
     val orderId = randomUUID()
     val userId = randomUUID()
     val order = Order(orderId, userId, randomUUID(), BUY, 2.toBigDecimal(), BTC, USD, OPEN)

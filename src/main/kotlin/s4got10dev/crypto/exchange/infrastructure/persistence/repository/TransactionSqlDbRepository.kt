@@ -31,7 +31,6 @@ class TransactionSqlDbRepository(
   override suspend fun findAllByUserId(userId: UUID, page: Int, size: Int): Page<Transaction> {
     val pageRequest = PageRequest.of(page, size)
 
-
     val transactions = repository.findAllByUserIdOrderByCreatedAtDesc(userId, pageRequest).toList()
       .map { it.toTransaction(objectMapper) }
     val total = repository.countAllByUserId(userId)

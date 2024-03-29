@@ -5,22 +5,21 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpHeaders.AUTHORIZATION
 import org.springframework.http.HttpHeaders.COOKIE
 import org.springframework.stereotype.Component
+import org.springframework.web.server.CoWebFilter
+import org.springframework.web.server.CoWebFilterChain
 import org.springframework.web.server.ServerWebExchange
-import org.springframework.web.server.WebFilter
-import org.springframework.web.server.WebFilterChain
-import reactor.core.publisher.Mono
 import reactor.core.publisher.Mono.empty
 
 @Component
-class LoggingFilter : WebFilter {
+class LoggingFilter : CoWebFilter() {
 
   private val logger = KotlinLogging.logger {}
 
-  override fun filter(exchange: ServerWebExchange, chain: WebFilterChain): Mono<Void> {
+  override suspend fun filter(exchange: ServerWebExchange, chain: CoWebFilterChain) {
     val request = exchange.request
 
     if (request.path.value().startsWith("/actuator") || request.path.value().startsWith("/api-docs")) {
-      return chain.filter(exchange)
+      chain.filter(exchange)
     }
 
     val requestId = request.id
