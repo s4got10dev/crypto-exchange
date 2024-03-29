@@ -1,7 +1,5 @@
 package s4got10dev.crypto.exchange.domain.repository
 
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
 import s4got10dev.crypto.exchange.domain.entity.Currency
 import s4got10dev.crypto.exchange.domain.entity.Order
 import s4got10dev.crypto.exchange.domain.entity.OrderId
@@ -9,15 +7,16 @@ import s4got10dev.crypto.exchange.domain.entity.OrderType
 import s4got10dev.crypto.exchange.domain.entity.UserId
 
 interface OrderRepository {
-  fun save(order: Order): Mono<Order>
 
-  fun findById(orderId: OrderId): Mono<Order>
+  suspend fun save(order: Order): Order
 
-  fun findAllByUserId(userId: UserId): Flux<Order>
+  suspend fun findById(orderId: OrderId): Order?
 
-  fun findAllByBaseCurrencyAndQuoteCurrencyAndType(
+  suspend fun findAllByUserId(userId: UserId): List<Order>
+
+  suspend fun findAllByBaseCurrencyAndQuoteCurrencyAndType(
     baseCurrency: Currency,
     quoteCurrency: Currency,
     buy: OrderType
-  ): Flux<Order>
+  ): List<Order>
 }

@@ -1,11 +1,9 @@
 package s4got10dev.crypto.exchange.infrastructure.persistence.repository
 
 import java.util.UUID
-import org.springframework.data.repository.reactive.ReactiveCrudRepository
+import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
 import s4got10dev.crypto.exchange.domain.entity.Currency
 import s4got10dev.crypto.exchange.domain.entity.Order
 import s4got10dev.crypto.exchange.domain.entity.OrderId
@@ -24,23 +22,23 @@ class OrderSqlDbRepository(
   val repository: OrderR2dbcRepository
 ) : OrderRepository {
 
-  override fun save(order: Order): Mono<Order> {
-    return repository.save(order.toOrderTable()).map { it.toOrder() }
+  override suspend fun save(order: Order): Order {
+    return repository.save(order.toOrderTable()).toOrder()
   }
 
-  override fun findById(orderId: OrderId): Mono<Order> {
-    return repository.findById(orderId).map { it.toOrder() }
+  override suspend fun findById(orderId: OrderId): Order? {
+    return repository.findById(orderId)?.toOrder()
   }
 
-  override fun findAllByUserId(userId: UserId): Flux<Order> {
+  override suspend fun findAllByUserId(userId: UserId): List<Order> {
     return repository.findAllByUserId(userId).map { it.toOrder() }
   }
 
-  override fun findAllByBaseCurrencyAndQuoteCurrencyAndType(
+  override suspend fun findAllByBaseCurrencyAndQuoteCurrencyAndType(
     baseCurrency: Currency,
     quoteCurrency: Currency,
     buy: OrderType
-  ): Flux<Order> {
+  ): List<Order> {
     return repository.findAllByBaseCurrencyAndQuoteCurrencyAndTypeAndStatusOrderByCreatedAtAsc(
       baseCurrency,
       quoteCurrency,
@@ -53,16 +51,16 @@ class OrderSqlDbRepository(
 }
 
 @Repository
-interface OrderR2dbcRepository : ReactiveCrudRepository<OrderTable, UUID> {
+interface OrderR2dbcRepository : CoroutineCrudRepository<OrderTable, UUID> {
 
-  fun save(user: OrderTable): Mono<OrderTable>
+  suspend fun save(user: OrderTable): OrderTable
 
-  fun findAllByUserId(userId: UserId): Flux<OrderTable>
+  suspend fun findAllByUserId(userId: UserId): List<OrderTable>
 
-  fun findAllByBaseCurrencyAndQuoteCurrencyAndTypeAndStatusOrderByCreatedAtAsc(
+  suspend fun findAllByBaseCurrencyAndQuoteCurrencyAndTypeAndStatusOrderByCreatedAtAsc(
     baseCurrency: Currency,
     quoteCurrency: Currency,
     buy: OrderType,
     status: OrderStatus
-  ): Flux<OrderTable>
+  ): List<OrderTable>
 }

@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import reactor.core.publisher.Mono
 import s4got10dev.crypto.exchange.infrastructure.auth.AuthPrincipal
 import s4got10dev.crypto.exchange.interfaces.rest.API_V1_ORDERS
 import s4got10dev.crypto.exchange.interfaces.rest.API_V1_ORDERS_CANCEL
@@ -47,10 +46,10 @@ interface OrderApi {
     ]
   )
   @PostMapping(API_V1_ORDERS_PLACE)
-  fun placeOrder(
+  suspend fun placeOrder(
     @AuthenticationPrincipal authPrincipal: AuthPrincipal?,
     @RequestBody order: PlaceOrderRequest
-  ): Mono<ResponseEntity<Void>>
+  ): ResponseEntity<Unit>
 
   @Operation(
     method = "GET",
@@ -80,10 +79,10 @@ interface OrderApi {
     ]
   )
   @GetMapping(API_V1_ORDERS_GET)
-  fun getOrder(
+  suspend fun getOrder(
     @AuthenticationPrincipal authPrincipal: AuthPrincipal?,
     @PathVariable id: String
-  ): Mono<ResponseEntity<OrderResponse>>
+  ): ResponseEntity<OrderResponse>
 
   @Operation(
     method = "GET",
@@ -113,7 +112,7 @@ interface OrderApi {
     ]
   )
   @GetMapping(API_V1_ORDERS)
-  fun getOrders(@AuthenticationPrincipal authPrincipal: AuthPrincipal?): Mono<ResponseEntity<List<OrderResponse>>>
+  suspend fun getOrders(@AuthenticationPrincipal authPrincipal: AuthPrincipal?): ResponseEntity<List<OrderResponse>>
 
   @Operation(
     method = "PATCH",
@@ -147,8 +146,8 @@ interface OrderApi {
     ]
   )
   @PatchMapping(API_V1_ORDERS_CANCEL)
-  fun cancelOrder(
+  suspend fun cancelOrder(
     @AuthenticationPrincipal authPrincipal: AuthPrincipal?,
     @PathVariable id: String
-  ): Mono<ResponseEntity<Void>>
+  ): ResponseEntity<Unit>
 }

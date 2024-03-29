@@ -17,8 +17,6 @@ import org.awaitility.kotlin.withPollDelay
 import org.awaitility.kotlin.withPollInterval
 import org.junit.jupiter.api.Test
 import org.springframework.context.ApplicationEventPublisher
-import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.toFlux
 import s4got10dev.crypto.exchange.domain.entity.Currency.BTC
 import s4got10dev.crypto.exchange.domain.entity.Currency.ETH
 import s4got10dev.crypto.exchange.domain.entity.Currency.EUR
@@ -58,15 +56,15 @@ class OrderMatchingServiceTest {
       Order(randomUUID(), sellWallet.userId, sellWallet.id!!, SELL, 1.toBigDecimal(), base, quote, CANCELED)
     val sellOrder = Order(randomUUID(), sellWallet.userId, sellWallet.id!!, SELL, 2.toBigDecimal(), base, quote, OPEN)
 
-    every {
+    coEvery {
       orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, BUY)
-    } returns listOf(buyOrder).toFlux()
+    } returns listOf(buyOrder)
 
-    every {
+    coEvery {
       orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, SELL)
-    } returns listOf(sellOrderCanceled, sellOrder).toFlux()
+    } returns listOf(sellOrderCanceled, sellOrder)
 
-    every { orderRepository.save(any()) } returns Mono.just(mockk<Order>())
+    coEvery { orderRepository.save(any()) } returns mockk<Order>()
 
     coEvery { walletRepository.findById(buyWallet.id!!) } returns buyWallet
     coEvery { walletRepository.findById(sellWallet.id!!) } returns sellWallet
@@ -77,14 +75,14 @@ class OrderMatchingServiceTest {
     orderMatchingService.handleProcessOrderEvent(MatchOrdersEvent(base, quote))
 
     await withPollInterval ofMillis(100L) withPollDelay ofMillis(20L) atMost ofSeconds(30L) untilAsserted {
-      verify(exactly = 1) {
+      coVerify(exactly = 1) {
         orderRepository.save(
           withArg {
             assertThat(it).hasFieldOrPropertyWithValue("id", buyOrder.id).hasFieldOrPropertyWithValue("status", FILLED)
           }
         )
       }
-      verify(exactly = 1) {
+      coVerify(exactly = 1) {
         orderRepository.save(
           withArg {
             assertThat(it).hasFieldOrPropertyWithValue("id", sellOrder.id).hasFieldOrPropertyWithValue("status", FILLED)
@@ -113,8 +111,8 @@ class OrderMatchingServiceTest {
     }
 
     verify(exactly = 1) { pricingService.getPrice(base, quote) }
-    verify(exactly = 1) { orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, BUY) }
-    verify(exactly = 1) { orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, SELL) }
+    coVerify(exactly = 1) { orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, BUY) }
+    coVerify(exactly = 1) { orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, SELL) }
     coVerify(exactly = 2) { walletRepository.findById(any()) }
 
     verify(exactly = 2) { applicationEventPublisher.publishEvent(any<OrderFilledTransactionCreatedEvent>()) }
@@ -131,15 +129,15 @@ class OrderMatchingServiceTest {
     val buyOrder = Order(randomUUID(), buyWallet.userId, buyWallet.id!!, BUY, 5.toBigDecimal(), base, quote, OPEN)
     val sellOrder = Order(randomUUID(), sellWallet.userId, sellWallet.id!!, SELL, 3.toBigDecimal(), base, quote, OPEN)
 
-    every {
+    coEvery {
       orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, BUY)
-    } returns listOf(buyOrder).toFlux()
+    } returns listOf(buyOrder)
 
-    every {
+    coEvery {
       orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, SELL)
-    } returns listOf(sellOrder).toFlux()
+    } returns listOf(sellOrder)
 
-    every { orderRepository.save(any()) } returns Mono.just(mockk<Order>())
+    coEvery { orderRepository.save(any()) } returns mockk<Order>()
 
     coEvery { walletRepository.findById(buyWallet.id!!) } returns buyWallet
     coEvery { walletRepository.findById(sellWallet.id!!) } returns sellWallet
@@ -150,14 +148,14 @@ class OrderMatchingServiceTest {
     orderMatchingService.handleProcessOrderEvent(MatchOrdersEvent(base, quote))
 
     await withPollInterval ofMillis(100L) withPollDelay ofMillis(20L) atMost ofSeconds(30L) untilAsserted {
-      verify(exactly = 1) {
+      coVerify(exactly = 1) {
         orderRepository.save(
           withArg {
             assertThat(it).hasFieldOrPropertyWithValue("id", buyOrder.id).hasFieldOrPropertyWithValue("status", OPEN)
           }
         )
       }
-      verify(exactly = 1) {
+      coVerify(exactly = 1) {
         orderRepository.save(
           withArg {
             assertThat(it).hasFieldOrPropertyWithValue("id", sellOrder.id).hasFieldOrPropertyWithValue("status", FILLED)
@@ -186,8 +184,8 @@ class OrderMatchingServiceTest {
     }
 
     verify(exactly = 1) { pricingService.getPrice(base, quote) }
-    verify(exactly = 1) { orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, BUY) }
-    verify(exactly = 1) { orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, SELL) }
+    coVerify(exactly = 1) { orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, BUY) }
+    coVerify(exactly = 1) { orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, SELL) }
     coVerify(exactly = 2) { walletRepository.findById(any()) }
     verify(exactly = 2) { applicationEventPublisher.publishEvent(any<OrderFilledTransactionCreatedEvent>()) }
     confirmVerified(orderRepository, walletRepository, pricingService, applicationEventPublisher)
@@ -203,15 +201,15 @@ class OrderMatchingServiceTest {
     val buyOrder = Order(randomUUID(), buyWallet.userId, buyWallet.id!!, BUY, 5.toBigDecimal(), base, quote, OPEN)
     val sellOrder = Order(randomUUID(), sellWallet.userId, sellWallet.id!!, SELL, 3.toBigDecimal(), base, quote, OPEN)
 
-    every {
+    coEvery {
       orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, BUY)
-    } returns listOf(buyOrder).toFlux()
+    } returns listOf(buyOrder)
 
-    every {
+    coEvery {
       orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, SELL)
-    } returns listOf(sellOrder).toFlux()
+    } returns listOf(sellOrder)
 
-    every { orderRepository.save(any()) } returns Mono.just(mockk<Order>())
+    coEvery { orderRepository.save(any()) } returns mockk<Order>()
 
     coEvery { walletRepository.findById(buyWallet.id!!) } returns buyWallet
     coEvery { walletRepository.findById(sellWallet.id!!) } returns sellWallet
@@ -222,7 +220,7 @@ class OrderMatchingServiceTest {
     orderMatchingService.handleProcessOrderEvent(MatchOrdersEvent(base, quote))
 
     await withPollInterval ofMillis(100L) withPollDelay ofMillis(20L) atMost ofSeconds(30L) untilAsserted {
-      verify(exactly = 1) {
+      coVerify(exactly = 1) {
         orderRepository.save(
           withArg {
             assertThat(
@@ -234,8 +232,8 @@ class OrderMatchingServiceTest {
     }
 
     verify(exactly = 1) { pricingService.getPrice(base, quote) }
-    verify(exactly = 1) { orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, BUY) }
-    verify(exactly = 1) { orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, SELL) }
+    coVerify(exactly = 1) { orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, BUY) }
+    coVerify(exactly = 1) { orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, SELL) }
     coVerify(exactly = 2) { walletRepository.findById(any()) }
 
     confirmVerified(orderRepository, walletRepository, pricingService, applicationEventPublisher)

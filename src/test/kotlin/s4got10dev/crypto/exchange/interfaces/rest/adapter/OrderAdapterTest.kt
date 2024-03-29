@@ -4,9 +4,10 @@ import io.mockk.every
 import io.mockk.mockk
 import jakarta.validation.Validator
 import java.util.UUID.randomUUID
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
-import reactor.test.StepVerifier
 import s4got10dev.crypto.exchange.domain.entity.Currency.BTC
 import s4got10dev.crypto.exchange.domain.entity.Currency.USD
 import s4got10dev.crypto.exchange.domain.entity.OrderType
@@ -32,19 +33,13 @@ class OrderAdapterTest {
 
     every { validator.validate(request) } returns emptySet()
 
-    val result = orderAdapter.placeOrderCommand(userId, request)
-
-    StepVerifier.create(result)
-      .expectNextMatches {
-        assertThat(it.userId).isEqualTo(userId)
-        assertThat(it.walletId).isEqualTo(request.walletId)
-        assertThat(it.type).isEqualTo(request.type)
-        assertThat(it.amount).isEqualTo(request.amount)
-        assertThat(it.baseCurrency).isEqualTo(request.baseCurrency)
-        assertThat(it.quoteCurrency).isEqualTo(request.quoteCurrency)
-        true
-      }
-      .verifyComplete()
+    val result = runBlocking { orderAdapter.placeOrderCommand(userId, request) }
+    assertThat(result.userId).isEqualTo(userId)
+    assertThat(result.walletId).isEqualTo(request.walletId)
+    assertThat(result.type).isEqualTo(request.type)
+    assertThat(result.amount).isEqualTo(request.amount)
+    assertThat(result.baseCurrency).isEqualTo(request.baseCurrency)
+    assertThat(result.quoteCurrency).isEqualTo(request.quoteCurrency)
   }
 
   @Test
@@ -60,16 +55,9 @@ class OrderAdapterTest {
 
     every { validator.validate(request) } returns emptySet()
 
-    val result = orderAdapter.placeOrderCommand(userId, request)
-
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(BadRequestError::class.java)
-          .hasMessage("Required fields are missing")
-        true
-      }
-      .verify()
+    assertThatThrownBy { runBlocking { orderAdapter.placeOrderCommand(userId, request) } }
+      .isInstanceOf(BadRequestError::class.java)
+      .hasMessage("Required fields are missing")
   }
 
   @Test
@@ -77,31 +65,18 @@ class OrderAdapterTest {
     val userId = randomUUID()
     val orderId = randomUUID().toString()
 
-    val result = orderAdapter.orderQuery(userId, orderId)
-
-    StepVerifier.create(result)
-      .expectNextMatches {
-        assertThat(it.userId).isEqualTo(userId)
-        assertThat(it.orderId.toString()).isEqualTo(orderId)
-        true
-      }
-      .verifyComplete()
+    val result = runBlocking { orderAdapter.orderQuery(userId, orderId) }
+    assertThat(result.userId).isEqualTo(userId)
+    assertThat(result.orderId.toString()).isEqualTo(orderId)
   }
 
   @Test
   fun `orderQuery should return BadRequestError when userId is null`() {
     val orderId = randomUUID().toString()
 
-    val result = orderAdapter.orderQuery(null, orderId)
-
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(BadRequestError::class.java)
-          .hasMessage("Invalid user id")
-        true
-      }
-      .verify()
+    assertThatThrownBy { runBlocking { orderAdapter.orderQuery(null, orderId) } }
+      .isInstanceOf(BadRequestError::class.java)
+      .hasMessage("Invalid user id")
   }
 
   @Test
@@ -109,44 +84,24 @@ class OrderAdapterTest {
     val userId = randomUUID()
     val orderId = "invalid"
 
-    val result = orderAdapter.orderQuery(userId, orderId)
-
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(BadRequestError::class.java)
-          .hasMessage("Invalid order id")
-        true
-      }
-      .verify()
+    assertThatThrownBy { runBlocking { orderAdapter.orderQuery(userId, orderId) } }
+      .isInstanceOf(BadRequestError::class.java)
+      .hasMessage("Invalid order id")
   }
 
   @Test
   fun `ordersQuery should return OrdersQuery when userId is valid`() {
     val userId = randomUUID()
 
-    val result = orderAdapter.ordersQuery(userId)
-
-    StepVerifier.create(result)
-      .expectNextMatches {
-        assertThat(it.userId).isEqualTo(userId)
-        true
-      }
-      .verifyComplete()
+    val result = runBlocking { orderAdapter.ordersQuery(userId) }
+    assertThat(result.userId).isEqualTo(userId)
   }
 
   @Test
   fun `ordersQuery should return BadRequestError when userId is null`() {
-    val result = orderAdapter.ordersQuery(null)
-
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(BadRequestError::class.java)
-          .hasMessage("Invalid user id")
-        true
-      }
-      .verify()
+    assertThatThrownBy { runBlocking { orderAdapter.ordersQuery(null) } }
+      .isInstanceOf(BadRequestError::class.java)
+      .hasMessage("Invalid user id")
   }
 
   @Test
@@ -154,31 +109,19 @@ class OrderAdapterTest {
     val userId = randomUUID()
     val orderId = randomUUID().toString()
 
-    val result = orderAdapter.cancelOrderCommand(userId, orderId)
 
-    StepVerifier.create(result)
-      .expectNextMatches {
-        assertThat(it.userId).isEqualTo(userId)
-        assertThat(it.orderId.toString()).isEqualTo(orderId)
-        true
-      }
-      .verifyComplete()
+    val result = runBlocking { orderAdapter.cancelOrderCommand(userId, orderId) }
+    assertThat(result.userId).isEqualTo(userId)
+    assertThat(result.orderId.toString()).isEqualTo(orderId)
   }
 
   @Test
   fun `cancelOrderCommand should return BadRequestError when userId is null`() {
     val orderId = randomUUID().toString()
 
-    val result = orderAdapter.cancelOrderCommand(null, orderId)
-
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(BadRequestError::class.java)
-          .hasMessage("Invalid user id")
-        true
-      }
-      .verify()
+    assertThatThrownBy { runBlocking { orderAdapter.cancelOrderCommand(null, orderId) } }
+      .isInstanceOf(BadRequestError::class.java)
+      .hasMessage("Invalid user id")
   }
 
   @Test
@@ -186,15 +129,8 @@ class OrderAdapterTest {
     val userId = randomUUID()
     val orderId = "invalid"
 
-    val result = orderAdapter.cancelOrderCommand(userId, orderId)
-
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(BadRequestError::class.java)
-          .hasMessage("Invalid order id")
-        true
-      }
-      .verify()
+    assertThatThrownBy { runBlocking { orderAdapter.cancelOrderCommand(userId, orderId) } }
+      .isInstanceOf(BadRequestError::class.java)
+      .hasMessage("Invalid order id")
   }
 }

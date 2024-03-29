@@ -6,7 +6,6 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.springframework.context.ApplicationEventPublisher
@@ -52,11 +51,9 @@ class OrderMatchingService(
     val price = pricingService.getPrice(baseCurrency, quoteCurrency)
     currencyMutexes.computeIfAbsent(currency) { Mutex() }.withLock {
       val buyOrders =
-        orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(baseCurrency, quoteCurrency, BUY).collectList()
-          .awaitSingle()
+        orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(baseCurrency, quoteCurrency, BUY)
       val sellOrders =
-        orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(baseCurrency, quoteCurrency, SELL).collectList()
-          .awaitSingle()
+        orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(baseCurrency, quoteCurrency, SELL)
 
       matchOrders(buyOrders, sellOrders, price)
     }
@@ -79,12 +76,12 @@ class OrderMatchingService(
     val tradeQuoteAmount = tradeBaseAmount * price
     if (buyOrderWallet == null || !validateOrder(buyOrder, buyOrderWallet, tradeBaseAmount, tradeQuoteAmount)) {
       buyOrder.status = CANCELED
-      orderRepository.save(buyOrder).awaitSingle()
+      orderRepository.save(buyOrder)
       return
     }
     if (sellOrderWallet == null || !validateOrder(sellOrder, sellOrderWallet, tradeBaseAmount, tradeQuoteAmount)) {
       sellOrder.status = CANCELED
-      orderRepository.save(sellOrder).awaitSingle()
+      orderRepository.save(sellOrder)
       return
     }
     buyOrder.amount -= tradeBaseAmount
@@ -113,7 +110,7 @@ class OrderMatchingService(
     if (order.amount.isZero()) {
       order.status = FILLED
     }
-    orderRepository.save(order).awaitSingle()
+    orderRepository.save(order)
     walletRepository.save(wallet)
     if (order.status == FILLED) {
       applicationEventPublisher.publishEvent(OrderFilledTransactionCreatedEvent(order, baseAmount))
