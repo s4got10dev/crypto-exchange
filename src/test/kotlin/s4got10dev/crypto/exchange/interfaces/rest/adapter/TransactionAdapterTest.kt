@@ -1,9 +1,10 @@
 package s4got10dev.crypto.exchange.interfaces.rest.adapter
 
 import java.util.UUID.randomUUID
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
-import reactor.test.StepVerifier
 import s4got10dev.crypto.exchange.domain.error.BadRequestError
 
 class TransactionAdapterTest {
@@ -17,15 +18,9 @@ class TransactionAdapterTest {
     val size = 10
 
     val result = transactionAdapter.transactionsQuery(userId, page, size)
-
-    StepVerifier.create(result)
-      .expectNextMatches {
-        assertThat(it.userId).isEqualTo(userId)
-        assertThat(it.page).isEqualTo(page)
-        assertThat(it.size).isEqualTo(size)
-        true
-      }
-      .verifyComplete()
+    assertThat(result.userId).isEqualTo(userId)
+    assertThat(result.page).isEqualTo(page)
+    assertThat(result.size).isEqualTo(size)
   }
 
   @Test
@@ -34,15 +29,9 @@ class TransactionAdapterTest {
     val page = -1
     val size = -1
 
-    val result = transactionAdapter.transactionsQuery(userId, page, size)
-
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it).isInstanceOf(BadRequestError::class.java)
-        assertThat(it.message).isEqualTo("Invalid user id")
-        true
-      }
-      .verify()
+    assertThatThrownBy { runBlocking { transactionAdapter.transactionsQuery(userId, page, size) } }
+      .isInstanceOf(BadRequestError::class.java)
+      .hasMessage("Invalid user id")
   }
 
   @Test
@@ -51,14 +40,8 @@ class TransactionAdapterTest {
     val page = -1
     val size = -1
 
-    val result = transactionAdapter.transactionsQuery(userId, page, size)
-
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it).isInstanceOf(BadRequestError::class.java)
-        assertThat(it.message).isEqualTo("Invalid page or size")
-        true
-      }
-      .verify()
+    assertThatThrownBy { runBlocking { transactionAdapter.transactionsQuery(userId, page, size) } }
+      .isInstanceOf(BadRequestError::class.java)
+      .hasMessage("Invalid page or size")
   }
 }

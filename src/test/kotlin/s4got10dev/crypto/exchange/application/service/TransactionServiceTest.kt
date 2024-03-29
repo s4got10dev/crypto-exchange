@@ -1,14 +1,15 @@
 package s4got10dev.crypto.exchange.application.service
 
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import java.util.UUID.randomUUID
+import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.data.domain.Page
-import reactor.kotlin.core.publisher.toMono
-import reactor.test.StepVerifier
 import s4got10dev.crypto.exchange.domain.entity.Currency.USD
 import s4got10dev.crypto.exchange.domain.entity.Transaction
 import s4got10dev.crypto.exchange.domain.entity.Wallet
@@ -34,11 +35,11 @@ class TransactionServiceTest {
       every { userId } returns randomUUID()
     }
 
-    every { transactionRepository.save(any()) } returns mockk<Transaction>().toMono()
+    coEvery { transactionRepository.save(any()) } returns mockk<Transaction>()
 
     transactionService.handleTransactionEvent(DepositTransactionCreatedEvent(depositCommand, wallet))
 
-    verify(exactly = 1) { transactionRepository.save(any()) }
+    coVerify(exactly = 1) { transactionRepository.save(any()) }
     confirmVerified(transactionRepository)
   }
 
@@ -50,13 +51,12 @@ class TransactionServiceTest {
 
     val transactionPage = mockk<Page<Transaction>>()
 
-    every { transactionRepository.findAllByUserId(userId, page, size) } returns transactionPage.toMono()
+    coEvery { transactionRepository.findAllByUserId(userId, page, size) } returns transactionPage
 
-    StepVerifier.create(transactionService.getTransactions(TransactionsQuery(userId, page, size)))
-      .expectNext(transactionPage)
-      .verifyComplete()
+    val result = runBlocking { transactionService.getTransactions(TransactionsQuery(userId, page, size)) }
+    assertThat(result).isEqualTo(transactionPage)
 
-    verify(exactly = 1) { transactionRepository.findAllByUserId(userId, page, size) }
+    coVerify(exactly = 1) { transactionRepository.findAllByUserId(userId, page, size) }
     confirmVerified(transactionRepository)
   }
 }

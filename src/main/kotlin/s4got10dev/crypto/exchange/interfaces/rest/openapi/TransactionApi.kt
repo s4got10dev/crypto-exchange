@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
-import reactor.core.publisher.Mono
 import s4got10dev.crypto.exchange.infrastructure.auth.AuthPrincipal
 import s4got10dev.crypto.exchange.interfaces.rest.API_V1_TRANSACTIONS
 import s4got10dev.crypto.exchange.interfaces.rest.model.TransactionResponse
@@ -36,11 +35,11 @@ interface TransactionApi {
     ]
   )
   @GetMapping(API_V1_TRANSACTIONS)
-  fun getTransactions(
+  suspend fun getTransactions(
     @AuthenticationPrincipal authPrincipal: AuthPrincipal?,
     @RequestParam("page") page: Int = 0,
     @RequestParam("size") size: Int = 10
-  ): Mono<ResponseEntity<Page<TransactionResponse>>>
+  ): ResponseEntity<Page<TransactionResponse>>
 
   abstract class TransactionPage : Page<TransactionResponse>
 }

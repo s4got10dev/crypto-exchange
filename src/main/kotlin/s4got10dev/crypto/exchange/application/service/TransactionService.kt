@@ -1,10 +1,10 @@
 package s4got10dev.crypto.exchange.application.service
 
+import kotlinx.coroutines.runBlocking
 import org.springframework.context.event.EventListener
 import org.springframework.data.domain.Page
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import reactor.core.publisher.Mono
 import s4got10dev.crypto.exchange.domain.entity.Transaction
 import s4got10dev.crypto.exchange.domain.repository.TransactionRepository
 import s4got10dev.crypto.exchange.domain.usecase.TransactionCreatedEvent
@@ -24,11 +24,11 @@ class TransactionService(
       type = event.type,
       metadata = event.metadata
     )
-    transactionRepository.save(transaction).subscribe()
+    runBlocking { transactionRepository.save(transaction) }
   }
 
   @Transactional(readOnly = true)
-  fun getTransactions(query: TransactionsQuery): Mono<Page<Transaction>> {
+  suspend fun getTransactions(query: TransactionsQuery): Page<Transaction> {
     return transactionRepository.findAllByUserId(query.userId, query.page, query.size)
   }
 }

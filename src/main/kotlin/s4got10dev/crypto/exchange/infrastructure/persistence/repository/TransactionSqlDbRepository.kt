@@ -2,15 +2,15 @@ package s4got10dev.crypto.exchange.infrastructure.persistence.repository
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.util.UUID
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.toList
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
-import org.springframework.data.repository.reactive.ReactiveSortingRepository
+import org.springframework.data.repository.kotlin.CoroutineSortingRepository
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
 import s4got10dev.crypto.exchange.domain.entity.Transaction
 import s4got10dev.crypto.exchange.domain.repository.TransactionRepository
 import s4got10dev.crypto.exchange.infrastructure.persistence.mapper.toTransaction
@@ -24,25 +24,27 @@ class TransactionSqlDbRepository(
   val objectMapper: ObjectMapper
 ) : TransactionRepository {
 
-  override fun save(transaction: Transaction): Mono<Transaction> {
-    return repository.save(transaction.toTransactionTable(objectMapper)).map { it.toTransaction(objectMapper) }
+  override suspend fun save(transaction: Transaction): Transaction {
+    return repository.save(transaction.toTransactionTable(objectMapper)).toTransaction(objectMapper)
   }
 
-  override fun findAllByUserId(userId: UUID, page: Int, size: Int): Mono<Page<Transaction>> {
+  override suspend fun findAllByUserId(userId: UUID, page: Int, size: Int): Page<Transaction> {
     val pageRequest = PageRequest.of(page, size)
-    return repository.findAllByUserIdOrderByCreatedAtDesc(userId, pageRequest).map { it.toTransaction(objectMapper) }
-      .collectList()
-      .zipWith(repository.countAllByUserId(userId))
-      .map { PageImpl(it.t1, pageRequest, it.t2) }
+
+
+    val transactions = repository.findAllByUserIdOrderByCreatedAtDesc(userId, pageRequest).toList()
+      .map { it.toTransaction(objectMapper) }
+    val total = repository.countAllByUserId(userId)
+    return PageImpl(transactions, pageRequest, total)
   }
 }
 
 @Repository
-interface TransactionR2dbcRepository : ReactiveSortingRepository<TransactionTable, UUID> {
+interface TransactionR2dbcRepository : CoroutineSortingRepository<TransactionTable, UUID> {
 
-  fun save(user: TransactionTable): Mono<TransactionTable>
+  suspend fun save(user: TransactionTable): TransactionTable
 
-  fun findAllByUserIdOrderByCreatedAtDesc(userId: UUID, pageable: Pageable): Flux<TransactionTable>
+  fun findAllByUserIdOrderByCreatedAtDesc(userId: UUID, pageable: Pageable): Flow<TransactionTable>
 
-  fun countAllByUserId(userId: UUID): Mono<Long>
+  suspend fun countAllByUserId(userId: UUID): Long
 }
