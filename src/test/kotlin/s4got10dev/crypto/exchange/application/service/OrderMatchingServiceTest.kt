@@ -1,5 +1,7 @@
 package s4got10dev.crypto.exchange.application.service
 
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
@@ -17,7 +19,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.context.ApplicationEventPublisher
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toFlux
-import reactor.kotlin.core.publisher.toMono
 import s4got10dev.crypto.exchange.domain.entity.Currency.BTC
 import s4got10dev.crypto.exchange.domain.entity.Currency.ETH
 import s4got10dev.crypto.exchange.domain.entity.Currency.EUR
@@ -67,9 +68,9 @@ class OrderMatchingServiceTest {
 
     every { orderRepository.save(any()) } returns Mono.just(mockk<Order>())
 
-    every { walletRepository.findById(buyWallet.id!!) } returns buyWallet.toMono()
-    every { walletRepository.findById(sellWallet.id!!) } returns sellWallet.toMono()
-    every { walletRepository.save(any()) } returns Mono.just(mockk<Wallet>())
+    coEvery { walletRepository.findById(buyWallet.id!!) } returns buyWallet
+    coEvery { walletRepository.findById(sellWallet.id!!) } returns sellWallet
+    coEvery { walletRepository.save(any()) } returns mockk<Wallet>()
 
     every { pricingService.getPrice(base, quote) } returns 50_000.toBigDecimal()
 
@@ -92,7 +93,7 @@ class OrderMatchingServiceTest {
       }
     }
 
-    verify(exactly = 1) {
+    coVerify(exactly = 1) {
       walletRepository.save(
         withArg {
           assertThat(it.id).isEqualTo(buyWallet.id)
@@ -101,7 +102,7 @@ class OrderMatchingServiceTest {
         }
       )
     }
-    verify(exactly = 1) {
+    coVerify(exactly = 1) {
       walletRepository.save(
         withArg {
           assertThat(it.id).isEqualTo(sellWallet.id)
@@ -114,7 +115,7 @@ class OrderMatchingServiceTest {
     verify(exactly = 1) { pricingService.getPrice(base, quote) }
     verify(exactly = 1) { orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, BUY) }
     verify(exactly = 1) { orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, SELL) }
-    verify(exactly = 2) { walletRepository.findById(any()) }
+    coVerify(exactly = 2) { walletRepository.findById(any()) }
 
     verify(exactly = 2) { applicationEventPublisher.publishEvent(any<OrderFilledTransactionCreatedEvent>()) }
     confirmVerified(orderRepository, walletRepository, pricingService, applicationEventPublisher)
@@ -140,9 +141,9 @@ class OrderMatchingServiceTest {
 
     every { orderRepository.save(any()) } returns Mono.just(mockk<Order>())
 
-    every { walletRepository.findById(buyWallet.id!!) } returns buyWallet.toMono()
-    every { walletRepository.findById(sellWallet.id!!) } returns sellWallet.toMono()
-    every { walletRepository.save(any()) } returns Mono.just(mockk<Wallet>())
+    coEvery { walletRepository.findById(buyWallet.id!!) } returns buyWallet
+    coEvery { walletRepository.findById(sellWallet.id!!) } returns sellWallet
+    coEvery { walletRepository.save(any()) } returns mockk<Wallet>()
 
     every { pricingService.getPrice(base, quote) } returns 50_000.toBigDecimal()
 
@@ -165,7 +166,7 @@ class OrderMatchingServiceTest {
       }
     }
 
-    verify(exactly = 1) {
+    coVerify(exactly = 1) {
       walletRepository.save(
         withArg {
           assertThat(it.id).isEqualTo(buyWallet.id)
@@ -174,7 +175,7 @@ class OrderMatchingServiceTest {
         }
       )
     }
-    verify(exactly = 1) {
+    coVerify(exactly = 1) {
       walletRepository.save(
         withArg {
           assertThat(it.id).isEqualTo(sellWallet.id)
@@ -187,7 +188,7 @@ class OrderMatchingServiceTest {
     verify(exactly = 1) { pricingService.getPrice(base, quote) }
     verify(exactly = 1) { orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, BUY) }
     verify(exactly = 1) { orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, SELL) }
-    verify(exactly = 2) { walletRepository.findById(any()) }
+    coVerify(exactly = 2) { walletRepository.findById(any()) }
     verify(exactly = 2) { applicationEventPublisher.publishEvent(any<OrderFilledTransactionCreatedEvent>()) }
     confirmVerified(orderRepository, walletRepository, pricingService, applicationEventPublisher)
   }
@@ -212,9 +213,9 @@ class OrderMatchingServiceTest {
 
     every { orderRepository.save(any()) } returns Mono.just(mockk<Order>())
 
-    every { walletRepository.findById(buyWallet.id!!) } returns buyWallet.toMono()
-    every { walletRepository.findById(sellWallet.id!!) } returns sellWallet.toMono()
-    every { walletRepository.save(any()) } returns Mono.just(mockk<Wallet>())
+    coEvery { walletRepository.findById(buyWallet.id!!) } returns buyWallet
+    coEvery { walletRepository.findById(sellWallet.id!!) } returns sellWallet
+    coEvery { walletRepository.save(any()) } returns mockk<Wallet>()
 
     every { pricingService.getPrice(base, quote) } returns 50_000.toBigDecimal()
 
@@ -235,7 +236,7 @@ class OrderMatchingServiceTest {
     verify(exactly = 1) { pricingService.getPrice(base, quote) }
     verify(exactly = 1) { orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, BUY) }
     verify(exactly = 1) { orderRepository.findAllByBaseCurrencyAndQuoteCurrencyAndType(base, quote, SELL) }
-    verify(exactly = 2) { walletRepository.findById(any()) }
+    coVerify(exactly = 2) { walletRepository.findById(any()) }
 
     confirmVerified(orderRepository, walletRepository, pricingService, applicationEventPublisher)
   }

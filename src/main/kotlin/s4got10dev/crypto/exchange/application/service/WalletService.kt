@@ -4,8 +4,6 @@ import java.math.BigDecimal.ZERO
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.toMono
 import s4got10dev.crypto.exchange.domain.entity.Wallet
 import s4got10dev.crypto.exchange.domain.error.BadRequestError
 import s4got10dev.crypto.exchange.domain.error.InternalError
@@ -30,89 +28,60 @@ class WalletService(
 ) {
 
   @Transactional
-  fun createWallet(command: CreateWalletCommand): Mono<WalletCreatedEvent> {
-    return walletRepository.existByUserIdAndName(command.userId, command.name)
-      .flatMap {
-        if (it) {
-          return@flatMap BadRequestError(
-            "Wallet with name '${command.name}' already exists for user '${command.userId}'"
-          ).toMono()
-        }
-        walletRepository.save(command.toWallet())
-          .flatMap { wallet ->
-            if (wallet.id == null) {
-              InternalError("Wallet was not saved").toMono()
-            } else {
-              WalletCreatedEvent(wallet.id).toMono()
-            }
-          }
-      }
+  suspend fun createWallet(command: CreateWalletCommand): WalletCreatedEvent {
+    val exist = walletRepository.existByUserIdAndName(command.userId, command.name)
+    if (exist) {
+      throw BadRequestError("Wallet with name '${command.name}' already exists for user '${command.userId}'")
+    }
+    val wallet = walletRepository.save(command.toWallet())
+    if (wallet.id == null) {
+      throw InternalError("Wallet was not saved")
+    }
+    return WalletCreatedEvent(wallet.id)
   }
 
   @Transactional(readOnly = true)
-  fun getWallet(query: WalletQuery): Mono<Wallet> {
-    return walletRepository.findById(query.walletId)
-      .switchIfEmpty(NotFoundError("Wallet '${query.walletId}' not found").toMono())
-      .flatMap {
-        if (it.userId != query.userId) {
-          NotFoundError("Wallet '${query.walletId}' not found").toMono()
-        } else {
-          it.toMono()
-        }
-      }
+  suspend fun getWallet(query: WalletQuery): Wallet {
+    val wallet = walletRepository.findById(query.walletId)
+    if (wallet == null || wallet.userId != query.userId) {
+      throw NotFoundError("Wallet '${query.walletId}' not found")
+    }
+    return wallet
   }
 
   @Transactional(readOnly = true)
-  fun getWallets(query: WalletsQuery): Mono<List<Wallet>> {
-    return walletRepository.findAllByUserId(query.userId).collectList()
+  suspend fun getWallets(query: WalletsQuery): List<Wallet> {
+    return walletRepository.findAllByUserId(query.userId)
   }
 
   @Transactional
-  fun deposit(command: DepositCommand): Mono<Wallet> {
-    return walletRepository.findById(command.walletId)
-      .switchIfEmpty(NotFoundError("Wallet '${command.walletId}' not found").toMono())
-      .flatMap { wallet ->
-        paymentService.receiveMoney(command.paymentId, command.amount, command.currency)
-          .flatMap {
-            if (it) {
-              val balance = wallet.balance.getOrDefault(command.currency, ZERO)
-              wallet.balance[command.currency] = balance + command.amount
-              walletRepository.save(wallet)
-            } else {
-              NonProcessableError("Deposit payment failed").toMono()
-            }
-          }
-      }
-      .map { wallet ->
-        applicationEventPublisher.publishEvent(DepositTransactionCreatedEvent(command, wallet))
-        wallet
-      }
+  suspend fun deposit(command: DepositCommand): Wallet {
+    val wallet = walletRepository.findById(command.walletId)
+      ?: throw NotFoundError("Wallet '${command.walletId}' not found")
+    val processed = paymentService.receiveMoney(command.paymentId, command.amount, command.currency)
+    if (!processed) {
+      throw NonProcessableError("Deposit payment failed")
+    }
+    wallet.addBalance(command.currency, command.amount)
+    val savedWallet = walletRepository.save(wallet)
+    applicationEventPublisher.publishEvent(DepositTransactionCreatedEvent(command, savedWallet))
+    return savedWallet
   }
 
   @Transactional
-  fun withdraw(command: WithdrawCommand): Mono<Wallet> {
-    return walletRepository.findById(command.walletId)
-      .switchIfEmpty(NotFoundError("Wallet '${command.walletId}' not found").toMono())
-      .flatMap { wallet ->
-        if (wallet.balance.getOrDefault(command.currency, ZERO) < command.amount) {
-          BadRequestError("Insufficient funds in wallet '${command.walletId}'").toMono()
-        } else {
-          wallet.toMono()
-        }
-      }
-      .flatMap { wallet ->
-        paymentService.sendMoney(command.paymentId, command.amount, command.currency).flatMap {
-          if (it) {
-            wallet.balance[command.currency] = wallet.balance.getOrDefault(command.currency, ZERO) - command.amount
-            walletRepository.save(wallet)
-          } else {
-            NonProcessableError("Withdrawal payment failed").toMono()
-          }
-        }
-      }
-      .map { wallet ->
-        applicationEventPublisher.publishEvent(WithdrawTransactionCreatedEvent(command, wallet))
-        wallet
-      }
+  suspend fun withdraw(command: WithdrawCommand): Wallet {
+    val wallet = walletRepository.findById(command.walletId)
+      ?: throw NotFoundError("Wallet '${command.walletId}' not found")
+    if (wallet.balance.getOrDefault(command.currency, ZERO) < command.amount) {
+      throw BadRequestError("Insufficient funds in wallet '${command.walletId}'")
+    }
+    val processed = paymentService.sendMoney(command.paymentId, command.amount, command.currency)
+    if (!processed) {
+      throw NonProcessableError("Withdrawal payment failed")
+    }
+    wallet.subtractBalance(command.currency, command.amount)
+    val savedWallet = walletRepository.save(wallet)
+    applicationEventPublisher.publishEvent(WithdrawTransactionCreatedEvent(command, savedWallet))
+    return savedWallet
   }
 }

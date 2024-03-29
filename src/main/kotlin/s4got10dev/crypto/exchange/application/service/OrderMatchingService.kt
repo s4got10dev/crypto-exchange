@@ -73,16 +73,16 @@ class OrderMatchingService(
   }
 
   private suspend fun matchOrder(buyOrder: Order, sellOrder: Order, price: BigDecimal) {
-    val buyOrderWallet = walletRepository.findById(buyOrder.walletId).awaitSingle()
-    val sellOrderWallet = walletRepository.findById(sellOrder.walletId).awaitSingle()
+    val buyOrderWallet = walletRepository.findById(buyOrder.walletId)
+    val sellOrderWallet = walletRepository.findById(sellOrder.walletId)
     val tradeBaseAmount = minOf(buyOrder.amount, sellOrder.amount)
     val tradeQuoteAmount = tradeBaseAmount * price
-    if (!validateOrder(buyOrder, buyOrderWallet, tradeBaseAmount, tradeQuoteAmount)) {
+    if (buyOrderWallet == null || !validateOrder(buyOrder, buyOrderWallet, tradeBaseAmount, tradeQuoteAmount)) {
       buyOrder.status = CANCELED
       orderRepository.save(buyOrder).awaitSingle()
       return
     }
-    if (!validateOrder(sellOrder, sellOrderWallet, tradeBaseAmount, tradeQuoteAmount)) {
+    if (sellOrderWallet == null || !validateOrder(sellOrder, sellOrderWallet, tradeBaseAmount, tradeQuoteAmount)) {
       sellOrder.status = CANCELED
       orderRepository.save(sellOrder).awaitSingle()
       return
@@ -99,13 +99,13 @@ class OrderMatchingService(
 
   private suspend fun validateOrder(
     order: Order,
-    wallet: Wallet,
+    wallet: Wallet?,
     baseAmount: BigDecimal,
     quoteAmount: BigDecimal
   ): Boolean {
     return when (order.type) {
-      BUY -> wallet.getBalance(order.quoteCurrency).scaled() >= quoteAmount.scaled()
-      SELL -> wallet.getBalance(order.baseCurrency).scaled() >= baseAmount.scaled()
+      BUY -> wallet?.getBalance(order.quoteCurrency).scaled() >= quoteAmount.scaled()
+      SELL -> wallet?.getBalance(order.baseCurrency).scaled() >= baseAmount.scaled()
     }
   }
 
@@ -114,7 +114,7 @@ class OrderMatchingService(
       order.status = FILLED
     }
     orderRepository.save(order).awaitSingle()
-    walletRepository.save(wallet).awaitSingle()
+    walletRepository.save(wallet)
     if (order.status == FILLED) {
       applicationEventPublisher.publishEvent(OrderFilledTransactionCreatedEvent(order, baseAmount))
     } else {

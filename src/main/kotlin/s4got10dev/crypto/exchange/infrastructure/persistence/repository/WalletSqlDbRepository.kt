@@ -2,11 +2,9 @@ package s4got10dev.crypto.exchange.infrastructure.persistence.repository
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.util.UUID
-import org.springframework.data.repository.reactive.ReactiveCrudRepository
+import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
 import s4got10dev.crypto.exchange.domain.entity.Wallet
 import s4got10dev.crypto.exchange.domain.repository.WalletRepository
 import s4got10dev.crypto.exchange.infrastructure.persistence.mapper.toWallet
@@ -20,29 +18,29 @@ class WalletSqlDbRepository(
   val objectMapper: ObjectMapper
 ) : WalletRepository {
 
-  override fun save(wallet: Wallet): Mono<Wallet> {
-    return repository.save(wallet.toWalletTable(objectMapper)).map { it.toWallet(objectMapper) }
+  override suspend fun save(wallet: Wallet): Wallet {
+    return repository.save(wallet.toWalletTable(objectMapper)).toWallet(objectMapper)
   }
 
-  override fun existByUserIdAndName(userId: UUID, name: String): Mono<Boolean> {
+  override suspend fun existByUserIdAndName(userId: UUID, name: String): Boolean {
     return repository.existsByUserIdAndName(userId, name)
   }
 
-  override fun findById(id: UUID): Mono<Wallet> {
-    return repository.findById(id).map { it.toWallet(objectMapper) }
+  override suspend fun findById(id: UUID): Wallet? {
+    return repository.findById(id)?.toWallet(objectMapper)
   }
 
-  override fun findAllByUserId(userId: UUID): Flux<Wallet> {
+  override suspend fun findAllByUserId(userId: UUID): List<Wallet> {
     return repository.findAllByUserId(userId).map { it.toWallet(objectMapper) }
   }
 }
 
 @Repository
-interface WalletR2dbcRepository : ReactiveCrudRepository<WalletTable, UUID> {
+interface WalletR2dbcRepository : CoroutineCrudRepository<WalletTable, UUID> {
 
-  fun save(user: WalletTable): Mono<WalletTable>
+  suspend fun save(user: WalletTable): WalletTable
 
-  fun existsByUserIdAndName(userId: UUID, name: String): Mono<Boolean>
+  suspend fun existsByUserIdAndName(userId: UUID, name: String): Boolean
 
-  fun findAllByUserId(userId: UUID): Flux<WalletTable>
+  suspend fun findAllByUserId(userId: UUID): List<WalletTable>
 }

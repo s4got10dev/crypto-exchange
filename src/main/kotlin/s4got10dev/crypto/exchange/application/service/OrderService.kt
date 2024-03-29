@@ -1,6 +1,7 @@
 package s4got10dev.crypto.exchange.application.service
 
 import java.math.BigDecimal.ZERO
+import kotlinx.coroutines.reactor.mono
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -34,7 +35,7 @@ class OrderService(
 
   @Transactional
   fun placeOrder(command: PlaceOrderCommand): Mono<OrderPlacedEvent> {
-    return walletRepository.findById(command.walletId)
+    return mono { walletRepository.findById(command.walletId) }
       .switchIfEmpty(NotFoundError("Wallet not found").toMono())
       .flatMap { wallet ->
         validateOrder(command, wallet)

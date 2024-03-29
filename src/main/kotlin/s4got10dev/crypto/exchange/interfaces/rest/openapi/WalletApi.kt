@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import reactor.core.publisher.Mono
 import s4got10dev.crypto.exchange.infrastructure.auth.AuthPrincipal
 import s4got10dev.crypto.exchange.interfaces.rest.API_V1_WALLETS
 import s4got10dev.crypto.exchange.interfaces.rest.API_V1_WALLETS_CREATE
@@ -50,10 +49,10 @@ interface WalletApi {
     ]
   )
   @PostMapping(API_V1_WALLETS_CREATE)
-  fun createWallet(
+  suspend fun createWallet(
     @AuthenticationPrincipal authPrincipal: AuthPrincipal?,
     @RequestBody wallet: CreateWalletRequest
-  ): Mono<ResponseEntity<Void>>
+  ): ResponseEntity<Unit>
 
   @Operation(
     method = "GET",
@@ -83,10 +82,10 @@ interface WalletApi {
     ]
   )
   @GetMapping(API_V1_WALLETS_GET_BY_ID)
-  fun getWallet(
+  suspend fun getWallet(
     @AuthenticationPrincipal authPrincipal: AuthPrincipal?,
     @PathVariable("id") id: String
-  ): Mono<ResponseEntity<WalletResponse>>
+  ): ResponseEntity<WalletResponse>
 
   @Operation(
     method = "GET",
@@ -103,7 +102,7 @@ interface WalletApi {
     ]
   )
   @GetMapping(API_V1_WALLETS)
-  fun getWallets(@AuthenticationPrincipal authPrincipal: AuthPrincipal?): Mono<ResponseEntity<List<WalletResponse>>>
+  suspend fun getWallets(@AuthenticationPrincipal authPrincipal: AuthPrincipal?): ResponseEntity<List<WalletResponse>>
 
   @Operation(
     method = "POST",
@@ -133,11 +132,11 @@ interface WalletApi {
     ]
   )
   @PostMapping(API_V1_WALLETS_DEPOSIT)
-  fun deposit(
+  suspend fun deposit(
     @AuthenticationPrincipal authPrincipal: AuthPrincipal?,
     @PathVariable("id") id: String,
     @RequestBody request: DepositRequest
-  ): Mono<ResponseEntity<WalletResponse>>
+  ): ResponseEntity<WalletResponse>
 
   @Operation(
     method = "POST",
@@ -167,9 +166,9 @@ interface WalletApi {
     ]
   )
   @PostMapping(API_V1_WALLETS_WITHDRAWAL)
-  fun withdrawal(
+  suspend fun withdrawal(
     @AuthenticationPrincipal authPrincipal: AuthPrincipal?,
     @PathVariable("id") id: String,
     @RequestBody request: WithdrawalRequest
-  ): Mono<ResponseEntity<WalletResponse>>
+  ): ResponseEntity<WalletResponse>
 }

@@ -3,8 +3,6 @@ package s4got10dev.crypto.exchange.interfaces.rest.adapter
 import jakarta.validation.Validator
 import java.util.UUID
 import org.springframework.stereotype.Component
-import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.toMono
 import s4got10dev.crypto.exchange.domain.entity.UserId
 import s4got10dev.crypto.exchange.domain.error.BadRequestError
 import s4got10dev.crypto.exchange.domain.error.ValidationError
@@ -23,73 +21,73 @@ class WalletAdapter(
   private val validator: Validator
 ) {
 
-  fun createWalletCommand(userId: UserId?, request: CreateWalletRequest): Mono<CreateWalletCommand> {
+  fun createWalletCommand(userId: UserId?, request: CreateWalletRequest): CreateWalletCommand {
     validator.validateRequest(request)?.let {
-      return it.toMono()
+      throw it
     }
     val currencies = request.currencies?.filterNotNull()
     if (currencies.isNullOrEmpty()) {
-      return BadRequestError("At least one currency is required").toMono()
+      throw BadRequestError("At least one currency is required")
     }
     if (userId == null || request.name == null) {
-      return BadRequestError("Required fields are missing").toMono()
+      throw BadRequestError("Required fields are missing")
     }
-    return CreateWalletCommand(userId = userId, name = request.name, currencies = currencies).toMono()
+    return CreateWalletCommand(userId = userId, name = request.name, currencies = currencies)
   }
 
-  fun walletQuery(userId: UserId?, walletId: String): Mono<WalletQuery> {
+  fun walletQuery(userId: UserId?, walletId: String): WalletQuery {
     if (userId == null) {
-      return BadRequestError("Invalid user id").toMono()
+      throw BadRequestError("Invalid user id")
     }
     val walletId = runCatching { UUID.fromString(walletId) }.getOrNull()
     if (walletId == null) {
-      return BadRequestError("Invalid wallet id").toMono()
+      throw BadRequestError("Invalid wallet id")
     }
-    return WalletQuery(userId = userId, walletId = walletId).toMono()
+    return WalletQuery(userId = userId, walletId = walletId)
   }
 
-  fun walletsQuery(userId: UserId?): Mono<WalletsQuery> {
+  fun walletsQuery(userId: UserId?): WalletsQuery {
     if (userId == null) {
-      return BadRequestError("Invalid user id").toMono()
+      throw BadRequestError("Invalid user id")
     }
-    return WalletsQuery(userId = userId).toMono()
+    return WalletsQuery(userId = userId)
   }
 
-  fun depositCommand(walletId: String?, request: DepositRequest): Mono<DepositCommand> {
+  fun depositCommand(walletId: String?, request: DepositRequest): DepositCommand {
     validator.validateRequest(request)?.let {
-      return it.toMono()
+      throw it
     }
     val walletId = runCatching { UUID.fromString(walletId) }.getOrNull()
     if (walletId == null || request.amount == null || request.currency == null || request.paymentId == null) {
-      return BadRequestError("Required fields are missing").toMono()
+      throw BadRequestError("Required fields are missing")
     }
     if (request.amount.negativeOrZero()) {
-      return ValidationError(mapOf("amount" to "Amount should be positive"), "Validation error occurred").toMono()
+      throw ValidationError(mapOf("amount" to "Amount should be positive"), "Validation error occurred")
     }
     return DepositCommand(
       walletId = walletId,
       currency = request.currency,
       amount = request.amount,
       paymentId = request.paymentId
-    ).toMono()
+    )
   }
 
-  fun withdrawCommand(walletId: String?, request: WithdrawalRequest): Mono<WithdrawCommand> {
+  fun withdrawCommand(walletId: String?, request: WithdrawalRequest): WithdrawCommand {
     validator.validateRequest(request)?.let {
-      return it.toMono()
+      throw it
     }
     val walletId = runCatching { UUID.fromString(walletId) }.getOrNull()
     if (walletId == null || request.amount == null || request.currency == null || request.paymentId == null) {
-      return BadRequestError("Required fields are missing").toMono()
+      throw BadRequestError("Required fields are missing")
     }
     if (request.amount.negativeOrZero()) {
-      return ValidationError(mapOf("amount" to "Amount should be positive"), "Validation error occurred").toMono()
+      throw ValidationError(mapOf("amount" to "Amount should be positive"), "Validation error occurred")
     }
     return WithdrawCommand(
       walletId = walletId,
       currency = request.currency,
       amount = request.amount,
       paymentId = request.paymentId
-    ).toMono()
+    )
   }
 }

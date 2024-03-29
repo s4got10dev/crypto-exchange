@@ -1,5 +1,7 @@
 package s4got10dev.crypto.exchange.application.service
 
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
@@ -50,7 +52,7 @@ class OrderServiceTest {
     val wallet = Wallet(walletId, userId, "test", mutableMapOf(USD to 3000.toBigDecimal()))
     val order = Order(orderId, userId, walletId, BUY, 2.toBigDecimal(), BTC, USD, OPEN)
 
-    every { walletRepository.findById(walletId) } returns wallet.toMono()
+    coEvery { walletRepository.findById(walletId) } returns wallet
     every { orderRepository.save(any()) } returns order.toMono()
 
     val result = orderService.placeOrder(command)
@@ -62,7 +64,7 @@ class OrderServiceTest {
       }
       .verifyComplete()
 
-    verify(exactly = 1) { walletRepository.findById(any()) }
+    coVerify(exactly = 1) { walletRepository.findById(any()) }
     verify(exactly = 1) { orderRepository.save(any()) }
     verify(exactly = 2) { applicationEventPublisher.publishEvent(any<Event>()) }
     confirmVerified(walletRepository, orderRepository, applicationEventPublisher)
@@ -77,7 +79,7 @@ class OrderServiceTest {
     val wallet = Wallet(walletId, userId, "test", mutableMapOf(BTC to 4.toBigDecimal()))
     val order = Order(orderId, userId, walletId, SELL, 2.toBigDecimal(), BTC, USD, OPEN)
 
-    every { walletRepository.findById(walletId) } returns wallet.toMono()
+    coEvery { walletRepository.findById(walletId) } returns wallet
     every { orderRepository.save(any()) } returns order.toMono()
 
     val result = orderService.placeOrder(command)
@@ -89,7 +91,7 @@ class OrderServiceTest {
       }
       .verifyComplete()
 
-    verify(exactly = 1) { walletRepository.findById(any()) }
+    coVerify(exactly = 1) { walletRepository.findById(any()) }
     verify(exactly = 1) { orderRepository.save(any()) }
     verify(exactly = 2) { applicationEventPublisher.publishEvent(any<Event>()) }
     confirmVerified(walletRepository, orderRepository, applicationEventPublisher)
@@ -101,7 +103,7 @@ class OrderServiceTest {
     val userId = randomUUID()
     val command = PlaceOrderCommand(userId, walletId, BUY, 2.toBigDecimal(), BTC, USD)
 
-    every { walletRepository.findById(walletId) } returns empty()
+    coEvery { walletRepository.findById(walletId) } returns null
 
     val result = orderService.placeOrder(command)
 
@@ -113,7 +115,7 @@ class OrderServiceTest {
       }
       .verify()
 
-    verify(exactly = 1) { walletRepository.findById(any()) }
+    coVerify(exactly = 1) { walletRepository.findById(any()) }
     confirmVerified(walletRepository, orderRepository, applicationEventPublisher)
   }
 
@@ -124,7 +126,7 @@ class OrderServiceTest {
     val command = PlaceOrderCommand(userId, walletId, BUY, 2.toBigDecimal(), BTC, USD)
     val wallet = Wallet(walletId, randomUUID(), "test", mutableMapOf(USD to 3000.toBigDecimal()))
 
-    every { walletRepository.findById(walletId) }.returns(wallet.toMono())
+    coEvery { walletRepository.findById(walletId) } returns wallet
 
     val result = orderService.placeOrder(command)
 
@@ -136,7 +138,7 @@ class OrderServiceTest {
       }
       .verify()
 
-    verify(exactly = 1) { walletRepository.findById(any()) }
+    coVerify(exactly = 1) { walletRepository.findById(any()) }
     confirmVerified(walletRepository, orderRepository, applicationEventPublisher)
   }
 
@@ -147,7 +149,7 @@ class OrderServiceTest {
     val command = PlaceOrderCommand(userId, walletId, BUY, 0.toBigDecimal(), BTC, USD)
     val wallet = Wallet(walletId, userId, "test", mutableMapOf(USD to 3000.toBigDecimal()))
 
-    every { walletRepository.findById(walletId) } returns wallet.toMono()
+    coEvery { walletRepository.findById(walletId) } returns wallet
 
     val result = orderService.placeOrder(command)
 
@@ -159,7 +161,7 @@ class OrderServiceTest {
       }
       .verify()
 
-    verify(exactly = 1) { walletRepository.findById(any()) }
+    coVerify(exactly = 1) { walletRepository.findById(any()) }
     confirmVerified(walletRepository, orderRepository, applicationEventPublisher)
   }
 
@@ -170,7 +172,7 @@ class OrderServiceTest {
     val command = PlaceOrderCommand(userId, walletId, BUY, 2.toBigDecimal(), BTC, BTC)
     val wallet = Wallet(walletId, userId, "test", mutableMapOf(USD to 3000.toBigDecimal()))
 
-    every { walletRepository.findById(walletId) } returns wallet.toMono()
+    coEvery { walletRepository.findById(walletId) } returns wallet
 
     val result = orderService.placeOrder(command)
 
@@ -182,7 +184,7 @@ class OrderServiceTest {
       }
       .verify()
 
-    verify(exactly = 1) { walletRepository.findById(any()) }
+    coVerify(exactly = 1) { walletRepository.findById(any()) }
     confirmVerified(walletRepository, orderRepository, applicationEventPublisher)
   }
 
@@ -193,7 +195,7 @@ class OrderServiceTest {
     val command = PlaceOrderCommand(userId, walletId, BUY, 2.toBigDecimal(), BTC, USD)
     val wallet = Wallet(walletId, userId, "test", mutableMapOf(EUR to 1000.toBigDecimal()))
 
-    every { walletRepository.findById(walletId) } returns wallet.toMono()
+    coEvery { walletRepository.findById(walletId) } returns wallet
 
     val result = orderService.placeOrder(command)
 
@@ -205,7 +207,7 @@ class OrderServiceTest {
       }
       .verify()
 
-    verify(exactly = 1) { walletRepository.findById(any()) }
+    coVerify(exactly = 1) { walletRepository.findById(any()) }
     confirmVerified(walletRepository, orderRepository, applicationEventPublisher)
   }
 
@@ -216,7 +218,7 @@ class OrderServiceTest {
     val command = PlaceOrderCommand(userId, walletId, SELL, 2.toBigDecimal(), BTC, USD)
     val wallet = Wallet(walletId, userId, "test", mutableMapOf(USD to 3000.toBigDecimal()))
 
-    every { walletRepository.findById(walletId) } returns wallet.toMono()
+    coEvery { walletRepository.findById(walletId) } returns wallet
 
     val result = orderService.placeOrder(command)
 
@@ -228,7 +230,7 @@ class OrderServiceTest {
       }
       .verify()
 
-    verify(exactly = 1) { walletRepository.findById(any()) }
+    coVerify(exactly = 1) { walletRepository.findById(any()) }
     confirmVerified(walletRepository, orderRepository, applicationEventPublisher)
   }
 

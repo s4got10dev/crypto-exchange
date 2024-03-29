@@ -5,8 +5,8 @@ import io.mockk.mockk
 import jakarta.validation.Validator
 import java.util.UUID.randomUUID
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
-import reactor.test.StepVerifier
 import s4got10dev.crypto.exchange.domain.entity.Currency.BTC
 import s4got10dev.crypto.exchange.domain.entity.Currency.ETH
 import s4got10dev.crypto.exchange.domain.error.BadRequestError
@@ -29,15 +29,9 @@ class WalletAdapterTest {
     every { validator.validate(request) } returns emptySet()
 
     val result = walletAdapter.createWalletCommand(userId, request)
-
-    StepVerifier.create(result)
-      .expectNextMatches {
-        assertThat(it.userId).isEqualTo(userId)
-        assertThat(it.name).isEqualTo(request.name)
-        assertThat(it.currencies).containsExactlyInAnyOrder(BTC, ETH)
-        true
-      }
-      .verifyComplete()
+    assertThat(result.userId).isEqualTo(userId)
+    assertThat(result.name).isEqualTo(request.name)
+    assertThat(result.currencies).containsExactlyInAnyOrder(BTC, ETH)
   }
 
   @Test
@@ -47,16 +41,9 @@ class WalletAdapterTest {
 
     every { validator.validate(request) } returns emptySet()
 
-    val result = walletAdapter.createWalletCommand(userId, request)
-
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(BadRequestError::class.java)
-          .hasMessage("At least one currency is required")
-        true
-      }
-      .verify()
+    assertThatThrownBy { walletAdapter.createWalletCommand(userId, request) }
+      .isInstanceOf(BadRequestError::class.java)
+      .hasMessage("At least one currency is required")
   }
 
   @Test
@@ -65,16 +52,9 @@ class WalletAdapterTest {
 
     every { validator.validate(request) } returns emptySet()
 
-    val result = walletAdapter.createWalletCommand(null, request)
-
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(BadRequestError::class.java)
-          .hasMessage("Required fields are missing")
-        true
-      }
-      .verify()
+    assertThatThrownBy { walletAdapter.createWalletCommand(null, request) }
+      .isInstanceOf(BadRequestError::class.java)
+      .hasMessage("Required fields are missing")
   }
 
   @Test
@@ -84,28 +64,17 @@ class WalletAdapterTest {
 
     val result = walletAdapter.walletQuery(userId, walletId)
 
-    StepVerifier.create(result)
-      .expectNextMatches {
-        assertThat(it.userId).isEqualTo(userId)
-        assertThat(it.walletId.toString()).isEqualTo(walletId)
-        true
-      }
-      .verifyComplete()
+    assertThat(result.userId).isEqualTo(userId)
+    assertThat(result.walletId.toString()).isEqualTo(walletId)
   }
 
   @Test
   fun `walletQuery should return BadRequestError when userId is null`() {
     val walletId = randomUUID().toString()
 
-    val result = walletAdapter.walletQuery(null, walletId)
-
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(BadRequestError::class.java)
-          .hasMessage("Invalid user id")
-        true
-      }
+    assertThatThrownBy { walletAdapter.walletQuery(null, walletId) }
+      .isInstanceOf(BadRequestError::class.java)
+      .hasMessage("Invalid user id")
   }
 
   @Test
@@ -113,15 +82,9 @@ class WalletAdapterTest {
     val userId = randomUUID()
     val walletId = "invalid"
 
-    val result = walletAdapter.walletQuery(userId, walletId)
-
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(BadRequestError::class.java)
-          .hasMessage("Invalid wallet id")
-        true
-      }
+    assertThatThrownBy { walletAdapter.walletQuery(userId, walletId) }
+      .isInstanceOf(BadRequestError::class.java)
+      .hasMessage("Invalid wallet id")
   }
 
   @Test
@@ -129,26 +92,14 @@ class WalletAdapterTest {
     val userId = randomUUID()
 
     val result = walletAdapter.walletsQuery(userId)
-
-    StepVerifier.create(result)
-      .expectNextMatches {
-        assertThat(it.userId).isEqualTo(userId)
-        true
-      }
-      .verifyComplete()
+    assertThat(result.userId).isEqualTo(userId)
   }
 
   @Test
   fun `walletsQuery should return BadRequestError when userId is null`() {
-    val result = walletAdapter.walletsQuery(null)
-
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(BadRequestError::class.java)
-          .hasMessage("Invalid user id")
-        true
-      }
+    assertThatThrownBy { walletAdapter.walletsQuery(null) }
+      .isInstanceOf(BadRequestError::class.java)
+      .hasMessage("Invalid user id")
   }
 
   @Test
@@ -160,14 +111,9 @@ class WalletAdapterTest {
 
     val result = walletAdapter.depositCommand(walletId.toString(), request)
 
-    StepVerifier.create(result)
-      .expectNextMatches {
-        assertThat(it.walletId).isEqualTo(walletId)
-        assertThat(it.amount).isEqualTo(10.20.toBigDecimal())
-        assertThat(it.currency).isEqualTo(BTC)
-        true
-      }
-      .verifyComplete()
+    assertThat(result.walletId).isEqualTo(walletId)
+    assertThat(result.amount).isEqualTo(10.20.toBigDecimal())
+    assertThat(result.currency).isEqualTo(BTC)
   }
 
   @Test
@@ -177,16 +123,9 @@ class WalletAdapterTest {
 
     every { validator.validate(request) } returns emptySet()
 
-    val result = walletAdapter.depositCommand(walletId, request)
-
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(BadRequestError::class.java)
-          .hasMessage("Required fields are missing")
-        true
-      }
-      .verify()
+    assertThatThrownBy { walletAdapter.depositCommand(walletId, request) }
+      .isInstanceOf(BadRequestError::class.java)
+      .hasMessage("Required fields are missing")
   }
 
   @Test
@@ -196,16 +135,9 @@ class WalletAdapterTest {
 
     every { validator.validate(request) } returns emptySet()
 
-    val result = walletAdapter.depositCommand(walletId.toString(), request)
-
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(ValidationError::class.java)
-          .hasMessage("Validation error occurred")
-        true
-      }
-      .verify()
+    assertThatThrownBy { walletAdapter.depositCommand(walletId.toString(), request) }
+      .isInstanceOf(ValidationError::class.java)
+      .hasMessage("Validation error occurred")
   }
 
   @Test
@@ -215,16 +147,9 @@ class WalletAdapterTest {
 
     every { validator.validate(request) } returns emptySet()
 
-    val result = walletAdapter.depositCommand(walletId.toString(), request)
-
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(BadRequestError::class.java)
-          .hasMessage("Required fields are missing")
-        true
-      }
-      .verify()
+    assertThatThrownBy { walletAdapter.depositCommand(walletId.toString(), request) }
+      .isInstanceOf(BadRequestError::class.java)
+      .hasMessage("Required fields are missing")
   }
 
   @Test
@@ -236,14 +161,9 @@ class WalletAdapterTest {
 
     val result = walletAdapter.withdrawCommand(walletId.toString(), request)
 
-    StepVerifier.create(result)
-      .expectNextMatches {
-        assertThat(it.walletId).isEqualTo(walletId)
-        assertThat(it.amount).isEqualTo(10.20.toBigDecimal())
-        assertThat(it.currency).isEqualTo(BTC)
-        true
-      }
-      .verifyComplete()
+    assertThat(result.walletId).isEqualTo(walletId)
+    assertThat(result.amount).isEqualTo(10.20.toBigDecimal())
+    assertThat(result.currency).isEqualTo(BTC)
   }
 
   @Test
@@ -253,16 +173,9 @@ class WalletAdapterTest {
 
     every { validator.validate(request) } returns emptySet()
 
-    val result = walletAdapter.withdrawCommand(walletId, request)
-
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(BadRequestError::class.java)
-          .hasMessage("Required fields are missing")
-        true
-      }
-      .verify()
+    assertThatThrownBy { walletAdapter.withdrawCommand(walletId, request) }
+      .isInstanceOf(BadRequestError::class.java)
+      .hasMessage("Required fields are missing")
   }
 
   @Test
@@ -272,16 +185,9 @@ class WalletAdapterTest {
 
     every { validator.validate(request) } returns emptySet()
 
-    val result = walletAdapter.withdrawCommand(walletId.toString(), request)
-
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(ValidationError::class.java)
-          .hasMessage("Validation error occurred")
-        true
-      }
-      .verify()
+    assertThatThrownBy { walletAdapter.withdrawCommand(walletId.toString(), request) }
+      .isInstanceOf(ValidationError::class.java)
+      .hasMessage("Validation error occurred")
   }
 
   @Test
@@ -291,15 +197,8 @@ class WalletAdapterTest {
 
     every { validator.validate(request) } returns emptySet()
 
-    val result = walletAdapter.withdrawCommand(walletId.toString(), request)
-
-    StepVerifier.create(result)
-      .expectErrorMatches {
-        assertThat(it)
-          .isInstanceOf(BadRequestError::class.java)
-          .hasMessage("Required fields are missing")
-        true
-      }
-      .verify()
+    assertThatThrownBy { walletAdapter.withdrawCommand(walletId.toString(), request) }
+      .isInstanceOf(BadRequestError::class.java)
+      .hasMessage("Required fields are missing")
   }
 }
