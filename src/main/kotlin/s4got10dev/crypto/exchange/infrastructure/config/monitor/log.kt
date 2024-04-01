@@ -19,7 +19,7 @@ class LoggingFilter : CoWebFilter() {
     val request = exchange.request
 
     if (request.path.value().startsWith("/actuator") || request.path.value().startsWith("/api-docs")) {
-      chain.filter(exchange)
+      return chain.filter(exchange)
     }
 
     val requestId = request.id
